@@ -1,13 +1,7 @@
 import * as vscode from 'vscode';
-import { CodeAnalyzer } from '../analyzers/codeAnalyzer';
-import { AIService } from '../ai/aiService';
-import { Vulnerability } from '../types';
 
 export class FixProvider implements vscode.CodeActionProvider {
-    constructor(
-        private analyzer: CodeAnalyzer,
-        private aiService: AIService
-    ) {}
+    constructor() {}
 
     async provideCodeActions(
         document: vscode.TextDocument,
@@ -172,78 +166,5 @@ export class FixProvider implements vscode.CodeActionProvider {
             default:
                 return `// code-guardian-disable-next-line ${code}`;
         }
-    }
-}
-
-export async function registerFixCommands(context: vscode.ExtensionContext, analyzer: CodeAnalyzer, aiService: AIService) {
-    context.subscriptions.push(
-        vscode.commands.registerCommand('codeGuardian.generateAIFix', async (document: vscode.TextDocument, diagnostic: vscode.Diagnostic) => {
-            try {
-                await vscode.window.withProgress({
-                    location: vscode.ProgressLocation.Notification,
-                    title: "Generating AI fix...",
-                    cancellable: false
-                }, async () => {
-                    const startLine = Math.max(0, diagnostic.range.start.line - 5);
-                    const endLine = Math.min(document.lineCount - 1, diagnostic.range.end.line + 5);
-
-                    const codeContext = document.getText(new vscode.Range(
-                        new vscode.Position(startLine, 0),
-                        new vscode.Position(endLine, Number.MAX_VALUE)
-                    ));
-
-                    const vulnerability: Vulnerability = {
-                        type: diagnostic.code?.toString() || 'unknown',
-                        severity: mapDiagnosticSeverity(diagnostic.severity),
-                        line: diagnostic.range.start.line + 1,
-                        column: diagnostic.range.start.character,
-                        message: diagnostic.message,
-                        confidence: 0.8
-                    };
-
-                    const fixedCode = await analyzer.suggestFix(
-                        vulnerability,
-                        codeContext,
-                        document.languageId
-                    );
-
-                    if (fixedCode && fixedCode !== '') {
-                        const edit = new vscode.WorkspaceEdit();
-                        edit.replace(
-                            document.uri,
-                            new vscode.Range(
-                                new vscode.Position(startLine, 0),
-                                new vscode.Position(endLine, Number.MAX_VALUE)
-                            ),
-                            fixedCode
-                        );
-
-                        const success = await vscode.workspace.applyEdit(edit);
-                        if (success) {
-                            vscode.window.showInformationMessage('AI fix applied successfully');
-                        } else {
-                            vscode.window.showErrorMessage('Failed to apply AI fix');
-                        }
-                    } else {
-                        vscode.window.showWarningMessage('Could not generate a fix for this issue');
-                    }
-                });
-            } catch (error) {
-                vscode.window.showErrorMessage(`AI fix generation failed: ${error}`);
-            }
-        })
-    );
-}
-
-function mapDiagnosticSeverity(severity: vscode.DiagnosticSeverity): 'critical' | 'high' | 'medium' | 'low' {
-    switch (severity) {
-        case vscode.DiagnosticSeverity.Error:
-            return 'high';
-        case vscode.DiagnosticSeverity.Warning:
-            return 'medium';
-        case vscode.DiagnosticSeverity.Information:
-            return 'low';
-        default:
-            return 'low';
     }
 }
