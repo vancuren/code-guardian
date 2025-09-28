@@ -6,6 +6,10 @@ import { VulnerabilityPanel } from './webviews/vulnerabilityPanel';
 import { DiagnosticProvider } from './utils/diagnosticProvider';
 import { FixProvider } from './utils/fixProvider';
 import { VulnerabilityTreeProvider, SuggestionsTreeProvider } from './views/vulnerabilityTreeProvider';
+import { ChatSessionManager } from './chat/sessionManager';
+import { ChatViewProvider } from './views/chatViewProvider';
+import { ChatController } from './chat/chatController';
+import { FixAgent } from './chat/fixAgent';
 
 let analyzer: CodeAnalyzer;
 let aiService: AIService;
@@ -13,6 +17,10 @@ let vulnerabilityPanel: VulnerabilityPanel | undefined;
 let diagnosticCollection: vscode.DiagnosticCollection;
 let vulnerabilityTreeProvider: VulnerabilityTreeProvider;
 let suggestionsTreeProvider: SuggestionsTreeProvider;
+let chatSessionManager: ChatSessionManager;
+let chatViewProvider: ChatViewProvider;
+let chatController: ChatController;
+let fixAgent: FixAgent;
 const SECRET_STORAGE_KEY = 'codeGuardian.apiKey';
 let missingKeyWarningShown = false;
 
@@ -46,6 +54,28 @@ export async function activate(context: vscode.ExtensionContext) {
     );
 
     analyzer = new CodeAnalyzer(aiService);
+
+    chatSessionManager = new ChatSessionManager(context.globalState);
+    chatController = new ChatController(aiService, chatSessionManager);
+    chatViewProvider = new ChatViewProvider(context.extensionUri, chatSessionManager);
+    fixAgent = new FixAgent(aiService, chatSessionManager, chatViewProvider);
+
+    context.subscriptions.push(chatViewProvider);
+    context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider('codeGuardian.chat', chatViewProvider)
+    );
+
+    context.subscriptions.push(
+        chatViewProvider.onDidRequestSendMessage(async ({ sessionId, content }) => {
+            await chatController.handleUserMessage(sessionId, content);
+        })
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('codeGuardian.generateAIFix', async (document: vscode.TextDocument, diagnostic: vscode.Diagnostic) => {
+            await fixAgent.run(document, diagnostic);
+        })
+    );
 
     context.subscriptions.push(
         vscode.commands.registerCommand('codeGuardian.setApiKey', async () => {
@@ -81,7 +111,7 @@ export async function activate(context: vscode.ExtensionContext) {
     warnIfMissingApiKey(providerName, apiKey);
 
     const diagnosticProvider = new DiagnosticProvider(diagnosticCollection);
-    const fixProvider = new FixProvider(analyzer, aiService);
+    const fixProvider = new FixProvider();
 
     // Initialize tree view providers
     vulnerabilityTreeProvider = new VulnerabilityTreeProvider();

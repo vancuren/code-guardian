@@ -2,7 +2,7 @@
   "name": "code-guardian",
   "displayName": "CodeGuardian - Your security assistant",
   "description": "Real-time GPT-5 powered vulnerability detection and remediation for VS Code and Cursor.",
-  "version": "1.0.3",
+  "version": "1.0.7",
   "publisher": "code-guardian",
   "engines": {
     "vscode": "^1.74.0"
@@ -14,7 +14,8 @@
   "activationEvents": [
     "onStartupFinished",
     "onCommand:codeGuardian.scanFile",
-    "onCommand:codeGuardian.scanWorkspace"
+    "onCommand:codeGuardian.scanWorkspace",
+    "onView:codeGuardian.chat"
   ],
   "browser": "./dist/extension.js",
   "contributes": {
@@ -144,7 +145,8 @@
         },
         {
           "id": "codeGuardian.chat",
-          "name": "Chat"
+          "name": "Chat",
+          "type": "webview"
         }
       ]
     },

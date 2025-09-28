@@ -1,39 +1,17 @@
-export type ChatRole = 'system' | 'user' | 'assistant' | 'tool';
-
-export interface ChatMessage {
-    role: ChatRole;
-    content: string;
-    name?: string;
-}
-
-export interface ChatRequestOptions {
-    temperature?: number;
-    maxTokens?: number;
-    systemPrompt?: string;
-}
-
-export interface ChatStreamCallbacks {
-    onToken?: (token: string) => void;
-    onStart?: () => void;
-    onComplete?: (fullText: string) => void;
-}
-
-interface AIProvider {
-    analyzeCode(prompt: string): Promise<string>;
-    generateFix(prompt: string): Promise<string>;
-    chat(messages: ChatMessage[], options?: ChatRequestOptions, callbacks?: ChatStreamCallbacks): Promise<string>;
-}
-
-class OpenAIProvider implements AIProvider {
-    constructor(private apiKey: string, private model: string) {}
-
-    private ensureApiKey() {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AIService = void 0;
+class OpenAIProvider {
+    constructor(apiKey, model) {
+        this.apiKey = apiKey;
+        this.model = model;
+    }
+    ensureApiKey() {
         if (!this.apiKey) {
             throw new Error('OpenAI API key not set. Use "Code Guardian: Set API Key" to store your key securely.');
         }
     }
-
-    async analyzeCode(prompt: string): Promise<string> {
+    async analyzeCode(prompt) {
         this.ensureApiKey();
         console.log('prompt', prompt);
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -58,12 +36,10 @@ class OpenAIProvider implements AIProvider {
                 // max_tokens: 2000
             })
         });
-
         const data = await response.json();
         return data.choices[0].message.content;
     }
-
-    async generateFix(prompt: string): Promise<string> {
+    async generateFix(prompt) {
         this.ensureApiKey();
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
@@ -87,18 +63,15 @@ class OpenAIProvider implements AIProvider {
                 // max_tokens: 1500
             })
         });
-
         const data = await response.json();
         return data.choices[0].message.content;
     }
-
-    async chat(messages: ChatMessage[], options?: ChatRequestOptions, callbacks?: ChatStreamCallbacks): Promise<string> {
+    async chat(messages, options, callbacks) {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p;
         this.ensureApiKey();
-
-        const normalizedMessages = options?.systemPrompt
-            ? [{ role: 'system', content: options.systemPrompt } as ChatMessage, ...messages]
+        const normalizedMessages = (options === null || options === void 0 ? void 0 : options.systemPrompt)
+            ? [{ role: 'system', content: options.systemPrompt }, ...messages]
             : messages;
-
         const body = {
             model: this.model,
             messages: normalizedMessages.map(message => ({
@@ -108,9 +81,8 @@ class OpenAIProvider implements AIProvider {
             })),
             // temperature: options?.temperature ?? 0.2,
             // max_tokens: options?.maxTokens ?? 800,
-            stream: typeof callbacks?.onToken === 'function'
+            stream: typeof (callbacks === null || callbacks === void 0 ? void 0 : callbacks.onToken) === 'function'
         };
-
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -119,83 +91,73 @@ class OpenAIProvider implements AIProvider {
             },
             body: JSON.stringify(body)
         });
-
         if (!response.ok) {
             const errorText = await response.text();
             throw new Error(`OpenAI chat failed: ${errorText}`);
         }
-
-        const shouldStream = Boolean(body.stream && response.body && callbacks?.onToken);
-
+        const shouldStream = Boolean(body.stream && response.body && (callbacks === null || callbacks === void 0 ? void 0 : callbacks.onToken));
         if (!shouldStream) {
             const data = await response.json();
-            const text = data.choices?.[0]?.message?.content ?? '';
-            callbacks?.onStart?.();
-            if (text && callbacks?.onToken) {
+            const text = (_d = (_c = (_b = (_a = data.choices) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.message) === null || _c === void 0 ? void 0 : _c.content) !== null && _d !== void 0 ? _d : '';
+            (_e = callbacks === null || callbacks === void 0 ? void 0 : callbacks.onStart) === null || _e === void 0 ? void 0 : _e.call(callbacks);
+            if (text && (callbacks === null || callbacks === void 0 ? void 0 : callbacks.onToken)) {
                 for (const chunk of chunkText(text)) {
                     callbacks.onToken(chunk);
                 }
             }
-            callbacks?.onComplete?.(text);
+            (_f = callbacks === null || callbacks === void 0 ? void 0 : callbacks.onComplete) === null || _f === void 0 ? void 0 : _f.call(callbacks, text);
             return text;
         }
-
-        callbacks?.onStart?.();
+        (_g = callbacks === null || callbacks === void 0 ? void 0 : callbacks.onStart) === null || _g === void 0 ? void 0 : _g.call(callbacks);
         const stream = response.body;
         if (!stream) {
             const fallbackText = await response.text();
-            callbacks?.onComplete?.(fallbackText);
+            (_h = callbacks === null || callbacks === void 0 ? void 0 : callbacks.onComplete) === null || _h === void 0 ? void 0 : _h.call(callbacks, fallbackText);
             return fallbackText;
         }
-
         const reader = stream.getReader();
         const decoder = new TextDecoder();
         let buffer = '';
         let fullText = '';
-
         while (true) {
             const { value, done } = await reader.read();
             if (done) {
                 break;
             }
-
             buffer += decoder.decode(value, { stream: true });
             const lines = buffer.split('\n');
-            buffer = lines.pop() ?? '';
-
+            buffer = (_j = lines.pop()) !== null && _j !== void 0 ? _j : '';
             for (const line of lines) {
                 const trimmed = line.trim();
                 if (!trimmed || !trimmed.startsWith('data:')) {
                     continue;
                 }
-
                 const payload = trimmed.slice(5).trim();
                 if (!payload || payload === '[DONE]') {
                     continue;
                 }
-
                 try {
                     const json = JSON.parse(payload);
-                    const delta = json.choices?.[0]?.delta?.content;
+                    const delta = (_m = (_l = (_k = json.choices) === null || _k === void 0 ? void 0 : _k[0]) === null || _l === void 0 ? void 0 : _l.delta) === null || _m === void 0 ? void 0 : _m.content;
                     if (delta) {
                         fullText += delta;
-                        callbacks?.onToken?.(delta);
+                        (_o = callbacks === null || callbacks === void 0 ? void 0 : callbacks.onToken) === null || _o === void 0 ? void 0 : _o.call(callbacks, delta);
                     }
-                } catch (error) {
+                }
+                catch (error) {
                     console.error('Failed to parse OpenAI stream payload', error);
                 }
             }
         }
-
-        callbacks?.onComplete?.(fullText);
+        (_p = callbacks === null || callbacks === void 0 ? void 0 : callbacks.onComplete) === null || _p === void 0 ? void 0 : _p.call(callbacks, fullText);
         return fullText;
     }
 }
-
-class AnthropicProvider implements AIProvider {
-    constructor(private apiKey: string) {}
-
-    async analyzeCode(prompt: string): Promise<string> {
+class AnthropicProvider {
+    constructor(apiKey) {
+        this.apiKey = apiKey;
+    }
+    async analyzeCode(prompt) {
         if (!this.apiKey) {
             throw new Error('Anthropic API key not set. Use "Code Guardian: Set API Key" to store your key securely.');
         }
@@ -219,12 +181,10 @@ class AnthropicProvider implements AIProvider {
                 temperature: 0.2
             })
         });
-
         const data = await response.json();
         return data.content[0].text;
     }
-
-    async generateFix(prompt: string): Promise<string> {
+    async generateFix(prompt) {
         if (!this.apiKey) {
             throw new Error('Anthropic API key not set. Use "Code Guardian: Set API Key" to store your key securely.');
         }
@@ -248,28 +208,24 @@ class AnthropicProvider implements AIProvider {
                 temperature: 0.1
             })
         });
-
         const data = await response.json();
         return data.content[0].text;
     }
-
-    async chat(messages: ChatMessage[], options?: ChatRequestOptions, callbacks?: ChatStreamCallbacks): Promise<string> {
+    async chat(messages, options, callbacks) {
+        var _a, _b, _c, _d, _e, _f, _g;
         if (!this.apiKey) {
             throw new Error('Anthropic API key not set. Use "Code Guardian: Set API Key" to store your key securely.');
         }
-
         const payloadMessages = messages.map(message => ({
             role: message.role === 'assistant' ? 'assistant' : 'user',
             content: message.content
         }));
-
-        if (options?.systemPrompt) {
+        if (options === null || options === void 0 ? void 0 : options.systemPrompt) {
             payloadMessages.unshift({
                 role: 'user',
                 content: options.systemPrompt
             });
         }
-
         const response = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: {
@@ -279,35 +235,30 @@ class AnthropicProvider implements AIProvider {
             },
             body: JSON.stringify({
                 model: 'claude-3-opus-20240229',
-                max_tokens: options?.maxTokens ?? 800,
+                max_tokens: (_a = options === null || options === void 0 ? void 0 : options.maxTokens) !== null && _a !== void 0 ? _a : 800,
                 messages: payloadMessages,
-                system: options?.systemPrompt,
-                temperature: options?.temperature ?? 0.2
+                system: options === null || options === void 0 ? void 0 : options.systemPrompt,
+                temperature: (_b = options === null || options === void 0 ? void 0 : options.temperature) !== null && _b !== void 0 ? _b : 0.2
             })
         });
-
         if (!response.ok) {
             const errorText = await response.text();
             throw new Error(`Anthropic chat failed: ${errorText}`);
         }
-
         const data = await response.json();
-        const text = data.content?.[0]?.text ?? '';
-
-        callbacks?.onStart?.();
-        if (text && callbacks?.onToken) {
+        const text = (_e = (_d = (_c = data.content) === null || _c === void 0 ? void 0 : _c[0]) === null || _d === void 0 ? void 0 : _d.text) !== null && _e !== void 0 ? _e : '';
+        (_f = callbacks === null || callbacks === void 0 ? void 0 : callbacks.onStart) === null || _f === void 0 ? void 0 : _f.call(callbacks);
+        if (text && (callbacks === null || callbacks === void 0 ? void 0 : callbacks.onToken)) {
             for (const chunk of chunkText(text)) {
                 callbacks.onToken(chunk);
             }
         }
-        callbacks?.onComplete?.(text);
-
+        (_g = callbacks === null || callbacks === void 0 ? void 0 : callbacks.onComplete) === null || _g === void 0 ? void 0 : _g.call(callbacks, text);
         return text;
     }
 }
-
-class LocalProvider implements AIProvider {
-    async analyzeCode(_prompt: string): Promise<string> {
+class LocalProvider {
+    async analyzeCode(_prompt) {
         return JSON.stringify([
             {
                 type: 'info',
@@ -319,38 +270,30 @@ class LocalProvider implements AIProvider {
             }
         ]);
     }
-
-    async generateFix(_prompt: string): Promise<string> {
+    async generateFix(_prompt) {
         return '// Local mode - Connect to AI provider for fix suggestions';
     }
-
-    async chat(messages: ChatMessage[], options?: ChatRequestOptions, callbacks?: ChatStreamCallbacks): Promise<string> {
+    async chat(messages, options, callbacks) {
+        var _a, _b;
         const reply = `Local mode placeholder. Provider is offline. Messages received: ${messages.length}`;
-        callbacks?.onStart?.();
-        if (callbacks?.onToken) {
+        (_a = callbacks === null || callbacks === void 0 ? void 0 : callbacks.onStart) === null || _a === void 0 ? void 0 : _a.call(callbacks);
+        if (callbacks === null || callbacks === void 0 ? void 0 : callbacks.onToken) {
             for (const chunk of chunkText(reply)) {
                 callbacks.onToken(chunk);
             }
         }
-        callbacks?.onComplete?.(reply);
+        (_b = callbacks === null || callbacks === void 0 ? void 0 : callbacks.onComplete) === null || _b === void 0 ? void 0 : _b.call(callbacks, reply);
         return reply;
     }
 }
-
-export class AIService {
-    private provider: AIProvider;
-    private providerName: string;
-    private apiKey: string;
-    private model: string;
-
-    constructor(providerName: string, apiKey: string, model: string) {
+class AIService {
+    constructor(providerName, apiKey, model) {
         this.providerName = providerName;
         this.apiKey = apiKey;
         this.model = model;
         this.provider = this.createProvider(providerName, apiKey, model);
     }
-
-    private createProvider(providerName: string, apiKey: string, model: string): AIProvider {
+    createProvider(providerName, apiKey, model) {
         switch (providerName) {
             case 'openai':
                 return new OpenAIProvider(apiKey, model);
@@ -361,49 +304,47 @@ export class AIService {
                 return new LocalProvider();
         }
     }
-
-    async analyzeCode(prompt: string): Promise<string> {
+    async analyzeCode(prompt) {
         try {
             return await this.provider.analyzeCode(prompt);
-        } catch (error) {
+        }
+        catch (error) {
             console.error('AI analysis failed:', error);
             throw error;
         }
     }
-
-    async generateFix(prompt: string): Promise<string> {
+    async generateFix(prompt) {
         try {
             return await this.provider.generateFix(prompt);
-        } catch (error) {
+        }
+        catch (error) {
             console.error('Fix generation failed:', error);
             throw error;
         }
     }
-
-    async chat(messages: ChatMessage[], options?: ChatRequestOptions, callbacks?: ChatStreamCallbacks): Promise<string> {
+    async chat(messages, options, callbacks) {
         try {
             return await this.provider.chat(messages, options, callbacks);
-        } catch (error) {
+        }
+        catch (error) {
             console.error('Chat interaction failed:', error);
             throw error;
         }
     }
-
-    updateConfig(providerName: string, model: string, apiKey: string) {
+    updateConfig(providerName, model, apiKey) {
         this.providerName = providerName;
         this.model = model;
         this.apiKey = apiKey;
         this.provider = this.createProvider(providerName, apiKey, model);
     }
-
-    updateApiKey(apiKey: string) {
+    updateApiKey(apiKey) {
         this.apiKey = apiKey;
         this.provider = this.createProvider(this.providerName, apiKey, this.model);
     }
 }
-
-function chunkText(text: string, chunkSize = 20): string[] {
-    const chunks: string[] = [];
+exports.AIService = AIService;
+function chunkText(text, chunkSize = 20) {
+    const chunks = [];
     for (let i = 0; i < text.length; i += chunkSize) {
         chunks.push(text.slice(i, i + chunkSize));
     }
