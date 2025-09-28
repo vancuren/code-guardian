@@ -1,76 +1,59 @@
-import * as vscode from 'vscode';
-import { ChatSessionManager } from '../chat/sessionManager';
-import { ChatSession, ResolvedChatState } from '../chat/types';
-
-export interface SendMessageRequest {
-    sessionId: string;
-    content: string;
-}
-
-export class ChatViewProvider implements vscode.WebviewViewProvider {
-    private view: vscode.WebviewView | undefined;
-    private readonly _onDidRequestSendMessage = new vscode.EventEmitter<SendMessageRequest>();
-    private readonly disposables: vscode.Disposable[] = [];
-
-    readonly onDidRequestSendMessage = this._onDidRequestSendMessage.event;
-
-    constructor(
-        private readonly extensionUri: vscode.Uri,
-        private readonly sessionManager: ChatSessionManager
-    ) {
-        this.disposables.push(
-            this.sessionManager.onDidChangeState(state => this.postState(state))
-        );
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ChatViewProvider = void 0;
+const vscode = require("vscode");
+class ChatViewProvider {
+    constructor(extensionUri, sessionManager) {
+        this.extensionUri = extensionUri;
+        this.sessionManager = sessionManager;
+        this._onDidRequestSendMessage = new vscode.EventEmitter();
+        this.disposables = [];
+        this.onDidRequestSendMessage = this._onDidRequestSendMessage.event;
+        this.disposables.push(this.sessionManager.onDidChangeState(state => this.postState(state)));
     }
-
     dispose() {
         vscode.Disposable.from(...this.disposables).dispose();
     }
-
-    resolveWebviewView(webviewView: vscode.WebviewView): void | Thenable<void> {
+    resolveWebviewView(webviewView) {
         this.view = webviewView;
         const { webview } = webviewView;
-
         webview.options = {
             enableScripts: true,
             localResourceRoots: [this.extensionUri]
         };
-
         webview.html = this.getHtmlForWebview(webview);
-
         webview.onDidReceiveMessage((message) => {
             this.handleWebviewMessage(message);
         });
     }
-
     reveal() {
+        var _a, _b;
         if (!this.view) {
             void vscode.commands.executeCommand('workbench.view.extension.code-guardian');
-        } else {
-            this.view.show?.(true);
+        }
+        else {
+            (_b = (_a = this.view).show) === null || _b === void 0 ? void 0 : _b.call(_a, true);
         }
     }
-
-    private postState(state?: ResolvedChatState) {
+    postState(state) {
         if (!this.view) {
             return;
         }
-
-        const effectiveState = state ?? this.sessionManager.getState();
+        const effectiveState = state !== null && state !== void 0 ? state : this.sessionManager.getState();
         this.view.webview.postMessage({
             type: 'state',
             payload: effectiveState
         });
     }
-
-    private handleWebviewMessage(message: any) {
-        switch (message?.type) {
+    handleWebviewMessage(message) {
+        var _a, _b;
+        switch (message === null || message === void 0 ? void 0 : message.type) {
             case 'ready':
                 this.postState();
                 break;
             case 'newSession': {
                 this.sessionManager.createSession('qa');
-                this.view?.show?.(true);
+                (_b = (_a = this.view) === null || _a === void 0 ? void 0 : _a.show) === null || _b === void 0 ? void 0 : _b.call(_a, true);
                 this.postState();
                 break;
             }
@@ -97,11 +80,9 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                 break;
         }
     }
-
-    private getHtmlForWebview(webview: vscode.Webview): string {
+    getHtmlForWebview(webview) {
         const nonce = getNonce();
         const csp = `default-src 'none'; img-src ${webview.cspSource} https:; script-src 'nonce-${nonce}'; style-src ${webview.cspSource} 'unsafe-inline';`;
-
         return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -455,7 +436,9 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 
         function renderMarkdown(text) {
             const escaped = escapeHtml(text);
-            return escaped;
+            return escaped
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\`([^\`]+)\`/g, '<code>$1</code>');
         }
 
         const savedState = vscode.getState();
@@ -470,7 +453,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 </html>`;
     }
 }
-
+exports.ChatViewProvider = ChatViewProvider;
 function getNonce() {
     let text = '';
     const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
