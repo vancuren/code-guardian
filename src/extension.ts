@@ -206,16 +206,76 @@ export async function activate(context: vscode.ExtensionContext) {
     );
 
     if (config.get('autoScan')) {
+        const lastScanTimestamps = new Map<string, number>();
+        const SCAN_DEBOUNCE_MS = 500;
+
+        const scanIfEligible = async (document: vscode.TextDocument) => {
+            const key = document.uri.toString();
+            const now = Date.now();
+            const lastScan = lastScanTimestamps.get(key) ?? 0;
+
+            if (now - lastScan < SCAN_DEBOUNCE_MS) {
+                return;
+            }
+
+            lastScanTimestamps.set(key, now);
+
+            if (isSupported(document)) {
+                await scanDocument(document, diagnosticProvider);
+            }
+        };
+
+        const maybeScanDocument = async (document: vscode.TextDocument) => {
+            await scanIfEligible(document);
+        };
+
+        const openAndScanUri = async (uri: vscode.Uri) => {
+            try {
+                const document = await vscode.workspace.openTextDocument(uri);
+                await scanIfEligible(document);
+            } catch (error) {
+                console.error(`Failed to open document for scanning: ${uri.fsPath}`, error);
+            }
+        };
+
         context.subscriptions.push(
             vscode.workspace.onDidSaveTextDocument(async (document) => {
-                if (isSupported(document)) {
-                    await scanDocument(document, diagnosticProvider);
+                await maybeScanDocument(document);
+            })
+        );
+
+        context.subscriptions.push(
+            vscode.workspace.onDidOpenTextDocument(async (document) => {
+                await maybeScanDocument(document);
+            })
+        );
+
+        context.subscriptions.push(
+            vscode.workspace.onDidCreateFiles(async (event) => {
+                for (const uri of event.files) {
+                    await openAndScanUri(uri);
                 }
             })
         );
 
+        const includeGlobs = getStringArray(config.get('fileIncludeGlobs')).map(pattern => normalizeForGlob(pattern)).filter(Boolean);
+        const watcherPatterns = includeGlobs.length > 0 ? includeGlobs : ['**/*'];
+
+        for (const pattern of watcherPatterns) {
+            const watcher = vscode.workspace.createFileSystemWatcher(pattern, false, false, true);
+            context.subscriptions.push(
+                watcher,
+                watcher.onDidCreate(async (uri) => {
+                    await openAndScanUri(uri);
+                }),
+                watcher.onDidChange(async (uri) => {
+                    await openAndScanUri(uri);
+                })
+            );
+        }
+
         if (vscode.window.activeTextEditor) {
-            await scanDocument(vscode.window.activeTextEditor.document, diagnosticProvider);
+            await maybeScanDocument(vscode.window.activeTextEditor.document);
         }
     }
 
