@@ -7,6 +7,7 @@ class OpenAIProvider implements AIProvider {
     constructor(private apiKey: string) {}
 
     async analyzeCode(prompt: string): Promise<string> {
+        console.log('prompt', prompt);
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -14,7 +15,7 @@ class OpenAIProvider implements AIProvider {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                model: 'gpt-5-codex',
+                model: 'gpt-5-nano',
                 messages: [
                     {
                         role: 'system',
@@ -26,7 +27,7 @@ class OpenAIProvider implements AIProvider {
                     }
                 ],
                 // temperature: 0.2,
-                max_tokens: 2000
+                // max_tokens: 2000
             })
         });
 
@@ -42,7 +43,7 @@ class OpenAIProvider implements AIProvider {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                model: 'gpt-4-turbo-preview',
+                model: 'gpt-5-codex',
                 messages: [
                     {
                         role: 'system',

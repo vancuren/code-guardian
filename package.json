@@ -1,8 +1,8 @@
 {
   "name": "code-guardian",
-  "displayName": "Code Guardian - AI Security Scanner",
-  "description": "Real-time AI-powered vulnerability detection and fix suggestions for JavaScript and Node.js",
-  "version": "1.0.0",
+  "displayName": "CodeGuardian - Your security assistant",
+  "description": "Real-time OpenAI powered vulnerability detection and remediation for Codex. Cursor only for now.",
+  "version": "1.0.2",
   "publisher": "code-guardian",
   "engines": {
     "vscode": "^1.74.0"
@@ -12,8 +12,7 @@
     "Other"
   ],
   "activationEvents": [
-    "onLanguage:javascript",
-    "onLanguage:typescript",
+    "onStartupFinished",
     "onCommand:codeGuardian.scanFile",
     "onCommand:codeGuardian.scanWorkspace"
   ],
@@ -22,19 +21,33 @@
     "commands": [
       {
         "command": "codeGuardian.scanFile",
-        "title": "Code Guardian: Scan Current File"
+        "title": "Code Guardian: Scan Current File",
+        "icon": "$(file-code)"
       },
       {
         "command": "codeGuardian.scanWorkspace",
-        "title": "Code Guardian: Scan Workspace"
+        "title": "Code Guardian: Scan Workspace",
+        "icon": "$(file-directory)"
       },
       {
         "command": "codeGuardian.applyFix",
-        "title": "Code Guardian: Apply Fix"
+        "title": "Code Guardian: Apply Fix",
+        "icon": "$(check)"
       },
       {
         "command": "codeGuardian.showPanel",
-        "title": "Code Guardian: Show Security Panel"
+        "title": "Code Guardian: Show Security Panel",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "codeGuardian.showTerminal",
+        "title": "Code Guardian: Show Terminal",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "codeGuardian.fixVulnerability",
+        "title": "Code Guardian: Fix Vulnerability",
+        "icon": "$(check)"
       }
     ],
     "configuration": {
@@ -55,6 +68,41 @@
           "type": "boolean",
           "default": true,
           "description": "Automatically scan files on save"
+        },
+        "codeGuardian.allowedLanguages": {
+          "type": "array",
+          "default": [],
+          "description": "Only analyze documents whose language identifier is listed here (leave empty to allow all text languages)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "codeGuardian.blockedLanguages": {
+          "type": "array",
+          "default": [],
+          "description": "Skip analysis for documents whose language identifier matches any entry",
+          "items": {
+            "type": "string"
+          }
+        },
+        "codeGuardian.fileIncludeGlobs": {
+          "type": "array",
+          "default": [],
+          "markdownDescription": "Glob patterns that must match a document path before it is analyzed. Leave empty to allow all files. Patterns use the same syntax as `files.exclude` (e.g. `**/*.{ts,js}`).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "codeGuardian.fileExcludeGlobs": {
+          "type": "array",
+          "default": [
+            "**/node_modules/**",
+            "**/.git/**"
+          ],
+          "markdownDescription": "Glob patterns that will be ignored during automatic scans and workspace scans. Patterns use the same syntax as `files.exclude`.",
+          "items": {
+            "type": "string"
+          }
         },
         "codeGuardian.severityThreshold": {
           "type": "string",
@@ -82,6 +130,31 @@
         {
           "id": "codeGuardian.suggestions",
           "name": "Fix Suggestions"
+        },
+        {
+          "id": "codeGuardian.terminal",
+          "name": "Terminal"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "codeGuardian.scanWorkspace",
+          "when": "view == codeGuardian.vulnerabilities",
+          "group": "navigation@1"
+        },
+        {
+          "command": "codeGuardian.scanFile",
+          "when": "view == codeGuardian.vulnerabilities",
+          "group": "navigation@2"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "codeGuardian.fixVulnerability",
+          "when": "viewItem == codeGuardian.vulnerability",
+          "group": "inline"
         }
       ]
     }
@@ -115,6 +188,7 @@
     "stream-browserify": "^3.0.0",
     "buffer": "^6.0.3",
     "util": "^0.12.5",
-    "process": "^0.11.10"
+    "process": "^0.11.10",
+    "minimatch": "^9.0.3"
   }
 }

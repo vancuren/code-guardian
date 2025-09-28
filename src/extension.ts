@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { minimatch } from 'minimatch';
 import { CodeAnalyzer } from './analyzers/codeAnalyzer';
 import { AIService } from './ai/aiService';
 import { VulnerabilityPanel } from './webviews/vulnerabilityPanel';
@@ -74,26 +75,52 @@ export async function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(
         vscode.commands.registerCommand('codeGuardian.scanWorkspace', async () => {
-            const files = await vscode.workspace.findFiles('**/*.{js,ts,jsx,tsx}', '**/node_modules/**');
+            const config = vscode.workspace.getConfiguration('codeGuardian');
+            const includeGlobs = getStringArray(config.get('fileIncludeGlobs')).map(pattern => normalizeForGlob(pattern)).filter(Boolean);
+            const excludeGlobs = getStringArray(config.get('fileExcludeGlobs')).map(pattern => normalizeForGlob(pattern)).filter(Boolean);
+
+            const includePatterns = includeGlobs.length ? includeGlobs : ['**/*'];
+            const combinedExclude = combineGlobPatterns(excludeGlobs);
+
+            const uniqueFiles = new Map<string, vscode.Uri>();
+
+            for (const pattern of includePatterns) {
+                const files = await vscode.workspace.findFiles(pattern, combinedExclude);
+                for (const file of files) {
+                    const key = file.toString();
+                    if (!uniqueFiles.has(key)) {
+                        uniqueFiles.set(key, file);
+                    }
+                }
+            }
+
+            const targets = Array.from(uniqueFiles.values()).sort((a, b) => a.fsPath.localeCompare(b.fsPath));
 
             await vscode.window.withProgress({
                 location: vscode.ProgressLocation.Notification,
-                title: "Scanning workspace for vulnerabilities",
+                title: 'Scanning workspace for vulnerabilities',
                 cancellable: true
             }, async (progress, token) => {
-                for (let i = 0; i < files.length; i++) {
+                for (let i = 0; i < targets.length; i++) {
                     if (token.isCancellationRequested) {
                         break;
                     }
 
-                    const file = files[i];
+                    const file = targets[i];
+                    const relativePath = normalizeForGlob(vscode.workspace.asRelativePath(file, false)) || normalizeForGlob(file.fsPath);
                     progress.report({
-                        increment: (100 / files.length),
-                        message: `Scanning ${file.fsPath.split('/').pop()}`
+                        increment: targets.length > 0 ? (100 / targets.length) : undefined,
+                        message: `Scanning ${relativePath}`
                     });
 
-                    const document = await vscode.workspace.openTextDocument(file);
-                    await scanDocument(document, diagnosticProvider);
+                    try {
+                        const document = await vscode.workspace.openTextDocument(file);
+                        if (isSupported(document)) {
+                            await scanDocument(document, diagnosticProvider);
+                        }
+                    } catch (error) {
+                        console.error(`Failed to scan ${file.fsPath}:`, error);
+                    }
                 }
             });
         })
@@ -198,9 +225,79 @@ async function scanDocument(document: vscode.TextDocument, diagnosticProvider: D
 }
 
 function isSupported(document: vscode.TextDocument): boolean {
+    console.log('document.languageId', document.languageId);
+    console.log('document.uri.scheme', document.uri.scheme);
+
+    if (document.languageId === 'binary') {
+        return false;
+    }
+
+    if (document.uri.scheme !== 'file' && document.uri.scheme !== 'untitled') {
+        return false;
+    }
+
+    const config = vscode.workspace.getConfiguration('codeGuardian');
+    const allowLanguages = getStringArray(config.get('allowedLanguages')).map(l => l.toLowerCase());
+    const blockLanguages = getStringArray(config.get('blockedLanguages')).map(l => l.toLowerCase());
+    const includePatterns = getStringArray(config.get('fileIncludeGlobs')).map(pattern => normalizeForGlob(pattern)).filter(Boolean);
+    const excludePatterns = getStringArray(config.get('fileExcludeGlobs')).map(pattern => normalizeForGlob(pattern)).filter(Boolean);
+
+    const languageId = document.languageId.toLowerCase();
+
+    if (blockLanguages.includes(languageId)) {
+        return false;
+    }
+
+    if (allowLanguages.length > 0 && !allowLanguages.includes(languageId)) {
+        return false;
+    }
+
+    const path = document.uri.scheme === 'untitled' ? document.fileName : document.uri.fsPath;
+    const relativePath = vscode.workspace.asRelativePath(path, false) || path;
+    const normalizedPath = normalizeForGlob(relativePath) || normalizeForGlob(path);
+
+    if (excludePatterns.some(pattern => minimatch(normalizedPath, pattern, { nocase: true, dot: true }))) {
+        return false;
+    }
+
+    if (includePatterns.length > 0 && !includePatterns.some(pattern => minimatch(normalizedPath, pattern, { nocase: true, dot: true }))) {
+        return false;
+    }
+
     return true;
-    // const supportedLanguages = ['javascript', 'typescript', 'javascriptreact', 'typescriptreact'];
-    // return supportedLanguages.includes(document.languageId);
+}
+
+function getStringArray(value: unknown): string[] {
+    if (Array.isArray(value)) {
+        return value.filter((item): item is string => typeof item === 'string').map(item => item.trim()).filter(Boolean);
+    }
+
+    if (typeof value === 'string' && value.trim().length > 0) {
+        return [value.trim()];
+    }
+
+    return [];
+}
+
+function combineGlobPatterns(patterns: string[]): string | undefined {
+    const sanitized = patterns.filter(Boolean);
+    if (sanitized.length === 0) {
+        return undefined;
+    }
+
+    if (sanitized.length === 1) {
+        return sanitized[0];
+    }
+
+    return `{${sanitized.join(',')}}`;
+}
+
+function normalizeForGlob(value: string | undefined): string {
+    if (!value) {
+        return '';
+    }
+
+    return value.replace(/\\+/g, '/');
 }
 
 export function deactivate() {

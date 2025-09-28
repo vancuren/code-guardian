@@ -52,9 +52,16 @@ Open VS Code/Cursor settings and search for "Code Guardian":
   "codeGuardian.aiProvider": "openai",
   "codeGuardian.apiKey": "your-api-key-here",
   "codeGuardian.autoScan": true,
+  "codeGuardian.allowedLanguages": ["javascript", "typescript"],
+  "codeGuardian.blockedLanguages": ["markdown"],
+  "codeGuardian.fileIncludeGlobs": ["**/*.{js,ts,jsx,tsx}"],
+  "codeGuardian.fileExcludeGlobs": ["**/node_modules/**", "**/.git/**"],
   "codeGuardian.severityThreshold": "low"
 }
 ```
+
+- `allowedLanguages` / `blockedLanguages` let you explicitly opt in or out of language identifiers (defaults allow every text document).
+- `fileIncludeGlobs` / `fileExcludeGlobs` cap analysis to the paths you care about and use the same glob syntax as VS Code's `files.exclude`.
 
 ## Usage
 
