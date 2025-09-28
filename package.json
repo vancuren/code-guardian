@@ -1,0 +1,120 @@
+{
+  "name": "code-guardian",
+  "displayName": "Code Guardian - AI Security Scanner",
+  "description": "Real-time AI-powered vulnerability detection and fix suggestions for JavaScript and Node.js",
+  "version": "1.0.0",
+  "publisher": "code-guardian",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Linters",
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:javascript",
+    "onLanguage:typescript",
+    "onCommand:codeGuardian.scanFile",
+    "onCommand:codeGuardian.scanWorkspace"
+  ],
+  "browser": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "codeGuardian.scanFile",
+        "title": "Code Guardian: Scan Current File"
+      },
+      {
+        "command": "codeGuardian.scanWorkspace",
+        "title": "Code Guardian: Scan Workspace"
+      },
+      {
+        "command": "codeGuardian.applyFix",
+        "title": "Code Guardian: Apply Fix"
+      },
+      {
+        "command": "codeGuardian.showPanel",
+        "title": "Code Guardian: Show Security Panel"
+      }
+    ],
+    "configuration": {
+      "title": "Code Guardian",
+      "properties": {
+        "codeGuardian.aiProvider": {
+          "type": "string",
+          "default": "openai",
+          "enum": ["openai", "local"],
+          "description": "AI provider for vulnerability analysis"
+        },
+        "codeGuardian.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API key for AI provider"
+        },
+        "codeGuardian.autoScan": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically scan files on save"
+        },
+        "codeGuardian.severityThreshold": {
+          "type": "string",
+          "default": "low",
+          "enum": ["critical", "high", "medium", "low"],
+          "description": "Minimum severity level to report"
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "code-guardian",
+          "title": "Code Guardian",
+          "icon": "$(shield)"
+        }
+      ]
+    },
+    "views": {
+      "code-guardian": [
+        {
+          "id": "codeGuardian.vulnerabilities",
+          "name": "Vulnerabilities"
+        },
+        {
+          "id": "codeGuardian.suggestions",
+          "name": "Fix Suggestions"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "package-vsix": "vsce package --allow-missing-repository",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0",
+    "@types/node": "^18.x",
+    "typescript": "^5.0.0",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4",
+    "ts-loader": "^9.5.1",
+    "jest": "^29.7.0"
+  },
+  "dependencies": {
+    "openai": "^4.20.0",
+    "@anthropic-ai/sdk": "^0.10.0",
+    "vm2": "^3.9.19",
+    "semver": "^7.5.4",
+    "eslint": "^8.54.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "path-browserify": "^1.0.1",
+    "crypto-browserify": "^3.12.0",
+    "stream-browserify": "^3.0.0",
+    "buffer": "^6.0.3",
+    "util": "^0.12.5",
+    "process": "^0.11.10"
+  }
+}
