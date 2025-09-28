@@ -13,21 +13,72 @@ let vulnerabilityPanel: VulnerabilityPanel | undefined;
 let diagnosticCollection: vscode.DiagnosticCollection;
 let vulnerabilityTreeProvider: VulnerabilityTreeProvider;
 let suggestionsTreeProvider: SuggestionsTreeProvider;
+const SECRET_STORAGE_KEY = 'codeGuardian.apiKey';
+let missingKeyWarningShown = false;
 
 export async function activate(context: vscode.ExtensionContext) {
     console.log('Code Guardian is now active!');
 
     const config = vscode.workspace.getConfiguration('codeGuardian');
+    const providerName = (config.get('aiProvider') as string) || 'openai';
+    const modelName = (config.get('model') as string) || 'gpt-5-nano';
+
+    const legacyApiKey = config.get<string>('apiKey');
+    let apiKey = (await context.secrets.get(SECRET_STORAGE_KEY)) || '';
+
+    if (legacyApiKey) {
+        if (!apiKey) {
+            await context.secrets.store(SECRET_STORAGE_KEY, legacyApiKey);
+            apiKey = legacyApiKey;
+            vscode.window.showInformationMessage('Code Guardian API key migrated to secure storage.');
+        }
+
+        await clearLegacyApiKey(config);
+    }
 
     diagnosticCollection = vscode.languages.createDiagnosticCollection('codeGuardian');
     context.subscriptions.push(diagnosticCollection);
 
     aiService = new AIService(
-        config.get('aiProvider') as string,
-        config.get('apiKey') as string
+        providerName,
+        apiKey,
+        modelName
     );
 
     analyzer = new CodeAnalyzer(aiService);
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('codeGuardian.setApiKey', async () => {
+            const result = await vscode.window.showInputBox({
+                prompt: 'Enter the API key for your configured AI provider',
+                placeHolder: 'sk-... or api_key',
+                password: true,
+                ignoreFocusOut: true
+            });
+
+            if (result === undefined) {
+                return;
+            }
+
+            const trimmed = result.trim();
+            const currentProvider = (vscode.workspace.getConfiguration('codeGuardian').get('aiProvider') as string) || 'openai';
+
+            if (!trimmed) {
+                await context.secrets.delete(SECRET_STORAGE_KEY);
+                aiService.updateApiKey('');
+                vscode.window.showInformationMessage('Code Guardian API key cleared.');
+                warnIfMissingApiKey(currentProvider, '');
+                return;
+            }
+
+            await context.secrets.store(SECRET_STORAGE_KEY, trimmed);
+            aiService.updateApiKey(trimmed);
+            vscode.window.showInformationMessage('Code Guardian API key securely stored.');
+            warnIfMissingApiKey(currentProvider, trimmed);
+        })
+    );
+
+    warnIfMissingApiKey(providerName, apiKey);
 
     const diagnosticProvider = new DiagnosticProvider(diagnosticCollection);
     const fixProvider = new FixProvider(analyzer, aiService);
@@ -168,14 +219,19 @@ export async function activate(context: vscode.ExtensionContext) {
         }
     }
 
+    const applyConfiguration = async () => {
+        const updatedConfig = vscode.workspace.getConfiguration('codeGuardian');
+        const updatedProvider = (updatedConfig.get('aiProvider') as string) || 'openai';
+        const updatedModel = (updatedConfig.get('model') as string) || 'gpt-5-nano';
+        const updatedApiKey = (await context.secrets.get(SECRET_STORAGE_KEY)) || '';
+        aiService.updateConfig(updatedProvider, updatedModel, updatedApiKey);
+        warnIfMissingApiKey(updatedProvider, updatedApiKey);
+    };
+
     context.subscriptions.push(
         vscode.workspace.onDidChangeConfiguration((e) => {
-            if (e.affectsConfiguration('codeGuardian')) {
-                const newConfig = vscode.workspace.getConfiguration('codeGuardian');
-                aiService.updateConfig(
-                    newConfig.get('aiProvider') as string,
-                    newConfig.get('apiKey') as string
-                );
+            if (e.affectsConfiguration('codeGuardian.aiProvider') || e.affectsConfiguration('codeGuardian.model')) {
+                void applyConfiguration();
             }
         })
     );
@@ -303,5 +359,28 @@ function normalizeForGlob(value: string | undefined): string {
 export function deactivate() {
     if (vulnerabilityPanel) {
         vulnerabilityPanel.dispose();
+    }
+}
+
+function warnIfMissingApiKey(provider: string, apiKey: string) {
+    if (provider === 'local' || apiKey) {
+        missingKeyWarningShown = false;
+        return;
+    }
+
+    if (missingKeyWarningShown) {
+        return;
+    }
+
+    missingKeyWarningShown = true;
+    vscode.window.showWarningMessage('Code Guardian API key is not set. Run "Code Guardian: Set API Key" to configure one or switch the provider to Local.');
+}
+
+async function clearLegacyApiKey(config: vscode.WorkspaceConfiguration) {
+    try {
+        await config.update('apiKey', undefined, vscode.ConfigurationTarget.Global);
+        await config.update('apiKey', undefined, vscode.ConfigurationTarget.Workspace);
+    } catch (error) {
+        console.error('Failed to clear legacy API key setting:', error);
     }
 }

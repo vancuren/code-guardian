@@ -1,41 +1,13 @@
 # Code Guardian - AI Security Scanner for VS Code/Cursor
 
-🛡️ **Code Guardian** is an advanced VS Code/Cursor extension that provides real-time security vulnerability detection and AI-powered fix suggestions for Node.js and Python code.
+🛡️ **Code Guardian** is an advanced VS Code/Cursor extension that provides real-time security vulnerability detection and AI-powered fix suggestions for any language.
 
 ## Features
 
-- 🔍 **Real-time vulnerability scanning** - Automatically scans your code as you type
-- 🤖 **AI-powered analysis** - Uses OpenAI GPT-4 or Claude for deep security analysis
-- 🐍 **Multi-language support** - Full support for JavaScript, TypeScript, and Python
-- 💡 **Smart fix suggestions** - Get instant, actionable fixes for detected vulnerabilities
-- 🎯 **Pattern-based detection** - Identifies common security anti-patterns
-- 📊 **Severity classification** - Issues ranked by criticality (Critical/High/Medium/Low)
-- 🔧 **One-click fixes** - Apply suggested fixes directly from the editor
-- 📈 **Security dashboard** - Visual overview of all vulnerabilities in your project
-
-## Detected Vulnerabilities
-
-### JavaScript/TypeScript
-- SQL Injection
-- Cross-Site Scripting (XSS)
-- Command Injection
-- Path Traversal
-- Insecure Randomness
-- Hardcoded Secrets
-- Prototype Pollution
-- Weak Cryptography
-- Insecure HTTP Requests
-
-### Python
-- Code Injection (eval/exec)
-- Command Injection
-- SQL Injection
-- Insecure Deserialization
-- Path Traversal
-- XML External Entity (XXE)
-- Server-Side Request Forgery (SSRF)
-- Weak Cryptography
-- Hardcoded Credentials
+- **Real-time vulnerability scanning** - Automatically scans your code as you type.
+- **GPT-5 powered analysis** - Uses OpenAI GPT-5 for deep on-demand security analysis.
+- **Multi-lanaguage support** - Full support for most languages.
+- **One-click fixes** - Apply suggested fixes directly from the editor.
 
 ## Installation
 

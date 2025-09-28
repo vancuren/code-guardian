@@ -4,9 +4,16 @@ interface AIProvider {
 }
 
 class OpenAIProvider implements AIProvider {
-    constructor(private apiKey: string) {}
+    constructor(private apiKey: string, private model: string) {}
+
+    private ensureApiKey() {
+        if (!this.apiKey) {
+            throw new Error('OpenAI API key not set. Use "Code Guardian: Set API Key" to store your key securely.');
+        }
+    }
 
     async analyzeCode(prompt: string): Promise<string> {
+        this.ensureApiKey();
         console.log('prompt', prompt);
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
@@ -15,7 +22,7 @@ class OpenAIProvider implements AIProvider {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                model: 'gpt-5-nano',
+                model: this.model,
                 messages: [
                     {
                         role: 'system',
@@ -36,6 +43,7 @@ class OpenAIProvider implements AIProvider {
     }
 
     async generateFix(prompt: string): Promise<string> {
+        this.ensureApiKey();
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -43,7 +51,7 @@ class OpenAIProvider implements AIProvider {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                model: 'gpt-5-codex',
+                model: this.model,
                 messages: [
                     {
                         role: 'system',
@@ -68,6 +76,9 @@ class AnthropicProvider implements AIProvider {
     constructor(private apiKey: string) {}
 
     async analyzeCode(prompt: string): Promise<string> {
+        if (!this.apiKey) {
+            throw new Error('Anthropic API key not set. Use "Code Guardian: Set API Key" to store your key securely.');
+        }
         const response = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: {
@@ -94,6 +105,9 @@ class AnthropicProvider implements AIProvider {
     }
 
     async generateFix(prompt: string): Promise<string> {
+        if (!this.apiKey) {
+            throw new Error('Anthropic API key not set. Use "Code Guardian: Set API Key" to store your key securely.');
+        }
         const response = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: {
@@ -141,15 +155,21 @@ class LocalProvider implements AIProvider {
 
 export class AIService {
     private provider: AIProvider;
+    private providerName: string;
+    private apiKey: string;
+    private model: string;
 
-    constructor(providerName: string, apiKey: string) {
-        this.provider = this.createProvider(providerName, apiKey);
+    constructor(providerName: string, apiKey: string, model: string) {
+        this.providerName = providerName;
+        this.apiKey = apiKey;
+        this.model = model;
+        this.provider = this.createProvider(providerName, apiKey, model);
     }
 
-    private createProvider(providerName: string, apiKey: string): AIProvider {
+    private createProvider(providerName: string, apiKey: string, model: string): AIProvider {
         switch (providerName) {
             case 'openai':
-                return new OpenAIProvider(apiKey);
+                return new OpenAIProvider(apiKey, model);
             case 'anthropic':
                 return new AnthropicProvider(apiKey);
             case 'local':
@@ -176,7 +196,15 @@ export class AIService {
         }
     }
 
-    updateConfig(providerName: string, apiKey: string) {
-        this.provider = this.createProvider(providerName, apiKey);
+    updateConfig(providerName: string, model: string, apiKey: string) {
+        this.providerName = providerName;
+        this.model = model;
+        this.apiKey = apiKey;
+        this.provider = this.createProvider(providerName, apiKey, model);
+    }
+
+    updateApiKey(apiKey: string) {
+        this.apiKey = apiKey;
+        this.provider = this.createProvider(this.providerName, apiKey, this.model);
     }
 }

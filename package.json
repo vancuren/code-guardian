@@ -1,7 +1,7 @@
 {
   "name": "code-guardian",
   "displayName": "CodeGuardian - Your security assistant",
-  "description": "Real-time OpenAI powered vulnerability detection and remediation for Codex. Cursor only for now.",
+  "description": "Real-time GPT-5 powered vulnerability detection and remediation for VS Code and Cursor.",
   "version": "1.0.2",
   "publisher": "code-guardian",
   "engines": {
@@ -48,6 +48,11 @@
         "command": "codeGuardian.fixVulnerability",
         "title": "Code Guardian: Fix Vulnerability",
         "icon": "$(check)"
+      },
+      {
+        "command": "codeGuardian.setApiKey",
+        "title": "Code Guardian: Set API Key",
+        "category": "Code Guardian"
       }
     ],
     "configuration": {
@@ -59,14 +64,20 @@
           "enum": ["openai", "local"],
           "description": "AI provider for vulnerability analysis"
         },
-        "codeGuardian.apiKey": {
+        "codeGuardian.model": {
           "type": "string",
-          "default": "",
-          "description": "API key for AI provider"
+          "default": "gpt-5-nano",
+          "enum": [
+            "gpt-5",
+            "gpt-5-nano",
+            "gpt-5-mini",
+            "gpt-5-codex"
+          ],
+          "description": "Model used for AI analysis and fixes"
         },
         "codeGuardian.autoScan": {
           "type": "boolean",
-          "default": true,
+          "default": false,
           "description": "Automatically scan files on save"
         },
         "codeGuardian.allowedLanguages": {
