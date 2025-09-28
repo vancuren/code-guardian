@@ -1,6 +1,10 @@
 # Code Guardian - AI Security Scanner for VS Code/Cursor
 
-🛡️ **Code Guardian** is an advanced VS Code/Cursor extension that provides real-time security vulnerability detection and AI-powered fix suggestions for any language.
+**Code Guardian** is an advanced VS Code/Cursor extension that provides real-time security vulnerability detection and AI-powered fix suggestions for any language.
+
+With the rise of coding assistants like Codex, security has never been more important. Code is moving from shipping in weeks to days, and that speed demands protection. Code Guardian is a VS Code extension that monitors your code in real time, detects vulnerabilities, suggests fixes, and applies them when you request all using GPT-5. It’s language-agnostic and highly configurable, so you stay in control.
+
+Imagine you accidentally commit a hardcoded password. Code Guardian instantly flags it, explains why it’s a risk, and can generate a secure fix you can apply with one click. Security remediation becomes as simple as accepting a code suggestion—keeping your code fast, safe, and production-ready.
 
 ## Features
 
