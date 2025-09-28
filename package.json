@@ -191,7 +191,6 @@
   },
   "dependencies": {
     "openai": "^4.20.0",
-    "@anthropic-ai/sdk": "^0.10.0",
     "vm2": "^3.9.19",
     "semver": "^7.5.4",
     "eslint": "^8.54.0",
