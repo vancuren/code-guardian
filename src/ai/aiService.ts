@@ -192,120 +192,6 @@ class OpenAIProvider implements AIProvider {
     }
 }
 
-class AnthropicProvider implements AIProvider {
-    constructor(private apiKey: string) {}
-
-    async analyzeCode(prompt: string): Promise<string> {
-        if (!this.apiKey) {
-            throw new Error('Anthropic API key not set. Use "Code Guardian: Set API Key" to store your key securely.');
-        }
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: {
-                'x-api-key': this.apiKey,
-                'anthropic-version': '2023-06-01',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                model: 'claude-3-opus-20240229',
-                max_tokens: 2000,
-                messages: [
-                    {
-                        role: 'user',
-                        content: prompt
-                    }
-                ],
-                system: 'You are a security expert analyzing code for vulnerabilities. Respond only with JSON array.',
-                temperature: 0.2
-            })
-        });
-
-        const data = await response.json();
-        return data.content[0].text;
-    }
-
-    async generateFix(prompt: string): Promise<string> {
-        if (!this.apiKey) {
-            throw new Error('Anthropic API key not set. Use "Code Guardian: Set API Key" to store your key securely.');
-        }
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: {
-                'x-api-key': this.apiKey,
-                'anthropic-version': '2023-06-01',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                model: 'claude-3-opus-20240229',
-                max_tokens: 1500,
-                messages: [
-                    {
-                        role: 'user',
-                        content: prompt
-                    }
-                ],
-                system: 'You are a security expert. Provide only the fixed code without explanation.',
-                temperature: 0.1
-            })
-        });
-
-        const data = await response.json();
-        return data.content[0].text;
-    }
-
-    async chat(messages: ChatMessage[], options?: ChatRequestOptions, callbacks?: ChatStreamCallbacks): Promise<string> {
-        if (!this.apiKey) {
-            throw new Error('Anthropic API key not set. Use "Code Guardian: Set API Key" to store your key securely.');
-        }
-
-        const payloadMessages = messages.map(message => ({
-            role: message.role === 'assistant' ? 'assistant' : 'user',
-            content: message.content
-        }));
-
-        if (options?.systemPrompt) {
-            payloadMessages.unshift({
-                role: 'user',
-                content: options.systemPrompt
-            });
-        }
-
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: {
-                'x-api-key': this.apiKey,
-                'anthropic-version': '2023-06-01',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                model: 'claude-3-opus-20240229',
-                max_tokens: options?.maxTokens ?? 800,
-                messages: payloadMessages,
-                system: options?.systemPrompt,
-                temperature: options?.temperature ?? 0.2
-            })
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Anthropic chat failed: ${errorText}`);
-        }
-
-        const data = await response.json();
-        const text = data.content?.[0]?.text ?? '';
-
-        callbacks?.onStart?.();
-        if (text && callbacks?.onToken) {
-            for (const chunk of chunkText(text)) {
-                callbacks.onToken(chunk);
-            }
-        }
-        callbacks?.onComplete?.(text);
-
-        return text;
-    }
-}
-
 class LocalProvider implements AIProvider {
     async analyzeCode(_prompt: string): Promise<string> {
         return JSON.stringify([
@@ -354,8 +240,6 @@ export class AIService {
         switch (providerName) {
             case 'openai':
                 return new OpenAIProvider(apiKey, model);
-            case 'anthropic':
-                return new AnthropicProvider(apiKey);
             case 'local':
             default:
                 return new LocalProvider();
