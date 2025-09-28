@@ -75,14 +75,9 @@ Open the security panel to see all vulnerabilities:
 ## API Providers
 
 ### OpenAI
-- Uses GPT-4 Turbo for analysis
+- Uses GPT-5 nano for analysis
 - Get API key from: https://platform.openai.com/api-keys
-- Pricing: ~$0.01 per file scan
 
-### Anthropic
-- Uses Claude 3 Opus for analysis
-- Get API key from: https://console.anthropic.com/
-- Pricing: ~$0.015 per file scan
 
 ### Local Mode
 - Basic pattern matching without AI
