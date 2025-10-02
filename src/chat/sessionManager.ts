@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { ChatSession, ChatSessionMetadata, ChatSessionStatus, ChatSessionType, ResolvedChatState, StoredChatMessage } from './types';
 
-const STORAGE_KEY = 'codeGuardian.chat.sessions';
+const STORAGE_KEY = 'pentari.chat.sessions';
 
 const randomId = () => Math.random().toString(36).slice(2, 10);
 

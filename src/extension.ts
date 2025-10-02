@@ -21,13 +21,13 @@ let chatSessionManager: ChatSessionManager;
 let chatViewProvider: ChatViewProvider;
 let chatController: ChatController;
 let fixAgent: FixAgent;
-const SECRET_STORAGE_KEY = 'codeGuardian.apiKey';
+const SECRET_STORAGE_KEY = 'pentari.apiKey';
 let missingKeyWarningShown = false;
 
 export async function activate(context: vscode.ExtensionContext) {
-    console.log('Code Guardian is now active!');
+    console.log('Pentari is now active!');
 
-    const config = vscode.workspace.getConfiguration('codeGuardian');
+    const config = vscode.workspace.getConfiguration('pentari');
     const providerName = (config.get('aiProvider') as string) || 'openai';
     const modelName = (config.get('model') as string) || 'gpt-5-nano';
 
@@ -38,13 +38,13 @@ export async function activate(context: vscode.ExtensionContext) {
         if (!apiKey) {
             await context.secrets.store(SECRET_STORAGE_KEY, legacyApiKey);
             apiKey = legacyApiKey;
-            vscode.window.showInformationMessage('Code Guardian API key migrated to secure storage.');
+            vscode.window.showInformationMessage('Pentari API key migrated to secure storage.');
         }
 
         await clearLegacyApiKey(config);
     }
 
-    diagnosticCollection = vscode.languages.createDiagnosticCollection('codeGuardian');
+    diagnosticCollection = vscode.languages.createDiagnosticCollection('pentari');
     context.subscriptions.push(diagnosticCollection);
 
     aiService = new AIService(
@@ -62,7 +62,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(chatViewProvider);
     context.subscriptions.push(
-        vscode.window.registerWebviewViewProvider('codeGuardian.chat', chatViewProvider)
+        vscode.window.registerWebviewViewProvider('pentari.chat', chatViewProvider)
     );
 
     context.subscriptions.push(
@@ -72,13 +72,13 @@ export async function activate(context: vscode.ExtensionContext) {
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('codeGuardian.generateAIFix', async (document: vscode.TextDocument, diagnostic: vscode.Diagnostic) => {
+        vscode.commands.registerCommand('pentari.generateAIFix', async (document: vscode.TextDocument, diagnostic: vscode.Diagnostic) => {
             await fixAgent.run(document, diagnostic);
         })
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('codeGuardian.setApiKey', async () => {
+        vscode.commands.registerCommand('pentari.setApiKey', async () => {
             const result = await vscode.window.showInputBox({
                 prompt: 'Enter the API key for your configured AI provider',
                 placeHolder: 'sk-... or api_key',
@@ -91,19 +91,19 @@ export async function activate(context: vscode.ExtensionContext) {
             }
 
             const trimmed = result.trim();
-            const currentProvider = (vscode.workspace.getConfiguration('codeGuardian').get('aiProvider') as string) || 'openai';
+            const currentProvider = (vscode.workspace.getConfiguration('pentari').get('aiProvider') as string) || 'openai';
 
             if (!trimmed) {
                 await context.secrets.delete(SECRET_STORAGE_KEY);
                 aiService.updateApiKey('');
-                vscode.window.showInformationMessage('Code Guardian API key cleared.');
+                vscode.window.showInformationMessage('Pentari API key cleared.');
                 warnIfMissingApiKey(currentProvider, '');
                 return;
             }
 
             await context.secrets.store(SECRET_STORAGE_KEY, trimmed);
             aiService.updateApiKey(trimmed);
-            vscode.window.showInformationMessage('Code Guardian API key securely stored.');
+            vscode.window.showInformationMessage('Pentari API key securely stored.');
             warnIfMissingApiKey(currentProvider, trimmed);
         })
     );
@@ -119,21 +119,21 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // Register tree views
     context.subscriptions.push(
-        vscode.window.createTreeView('codeGuardian.vulnerabilities', {
+        vscode.window.createTreeView('pentari.vulnerabilities', {
             treeDataProvider: vulnerabilityTreeProvider,
             showCollapseAll: true
         })
     );
 
     context.subscriptions.push(
-        vscode.window.createTreeView('codeGuardian.suggestions', {
+        vscode.window.createTreeView('pentari.suggestions', {
             treeDataProvider: suggestionsTreeProvider
         })
     );
 
     // Register command to open file at specific line
     context.subscriptions.push(
-        vscode.commands.registerCommand('codeGuardian.openAtLine', async (filePath: string, line: number) => {
+        vscode.commands.registerCommand('pentari.openAtLine', async (filePath: string, line: number) => {
             const document = await vscode.workspace.openTextDocument(filePath);
             const editor = await vscode.window.showTextDocument(document);
             const position = new vscode.Position(line - 1, 0);
@@ -143,7 +143,7 @@ export async function activate(context: vscode.ExtensionContext) {
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('codeGuardian.scanFile', async () => {
+        vscode.commands.registerCommand('pentari.scanFile', async () => {
             const editor = vscode.window.activeTextEditor;
             if (!editor) {
                 vscode.window.showErrorMessage('No active editor');
@@ -155,8 +155,8 @@ export async function activate(context: vscode.ExtensionContext) {
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('codeGuardian.scanWorkspace', async () => {
-            const config = vscode.workspace.getConfiguration('codeGuardian');
+        vscode.commands.registerCommand('pentari.scanWorkspace', async () => {
+            const config = vscode.workspace.getConfiguration('pentari');
             const includeGlobs = getStringArray(config.get('fileIncludeGlobs')).map(pattern => normalizeForGlob(pattern)).filter(Boolean);
             const excludeGlobs = getStringArray(config.get('fileExcludeGlobs')).map(pattern => normalizeForGlob(pattern)).filter(Boolean);
 
@@ -208,7 +208,7 @@ export async function activate(context: vscode.ExtensionContext) {
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('codeGuardian.applyFix', async (document: vscode.TextDocument, range: vscode.Range, fix: string) => {
+        vscode.commands.registerCommand('pentari.applyFix', async (document: vscode.TextDocument, range: vscode.Range, fix: string) => {
             const edit = new vscode.WorkspaceEdit();
             edit.replace(document.uri, range, fix);
             await vscode.workspace.applyEdit(edit);
@@ -217,7 +217,7 @@ export async function activate(context: vscode.ExtensionContext) {
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('codeGuardian.showPanel', () => {
+        vscode.commands.registerCommand('pentari.showPanel', () => {
             if (!vulnerabilityPanel) {
                 vulnerabilityPanel = new VulnerabilityPanel(context.extensionUri);
             }
@@ -310,7 +310,7 @@ export async function activate(context: vscode.ExtensionContext) {
     }
 
     const applyConfiguration = async () => {
-        const updatedConfig = vscode.workspace.getConfiguration('codeGuardian');
+        const updatedConfig = vscode.workspace.getConfiguration('pentari');
         const updatedProvider = (updatedConfig.get('aiProvider') as string) || 'openai';
         const updatedModel = (updatedConfig.get('model') as string) || 'gpt-5-nano';
         const updatedApiKey = (await context.secrets.get(SECRET_STORAGE_KEY)) || '';
@@ -320,7 +320,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(
         vscode.workspace.onDidChangeConfiguration((e) => {
-            if (e.affectsConfiguration('codeGuardian.aiProvider') || e.affectsConfiguration('codeGuardian.model')) {
+            if (e.affectsConfiguration('pentari.aiProvider') || e.affectsConfiguration('pentari.model')) {
                 void applyConfiguration();
             }
         })
@@ -359,7 +359,7 @@ async function scanDocument(document: vscode.TextDocument, diagnosticProvider: D
                 'Show Details'
             ).then(selection => {
                 if (selection === 'Show Details') {
-                    vscode.commands.executeCommand('codeGuardian.showPanel');
+                    vscode.commands.executeCommand('pentari.showPanel');
                 }
             });
         } else {
@@ -382,7 +382,7 @@ function isSupported(document: vscode.TextDocument): boolean {
         return false;
     }
 
-    const config = vscode.workspace.getConfiguration('codeGuardian');
+    const config = vscode.workspace.getConfiguration('pentari');
     const allowLanguages = getStringArray(config.get('allowedLanguages')).map(l => l.toLowerCase());
     const blockLanguages = getStringArray(config.get('blockedLanguages')).map(l => l.toLowerCase());
     const includePatterns = getStringArray(config.get('fileIncludeGlobs')).map(pattern => normalizeForGlob(pattern)).filter(Boolean);
@@ -463,7 +463,7 @@ function warnIfMissingApiKey(provider: string, apiKey: string) {
     }
 
     missingKeyWarningShown = true;
-    vscode.window.showWarningMessage('Code Guardian API key is not set. Run "Code Guardian: Set API Key" to configure one or switch the provider to Local.');
+    vscode.window.showWarningMessage('Pentari API key is not set. Run "Pentari: Set API Key" to configure one or switch the provider to Local.');
 }
 
 async function clearLegacyApiKey(config: vscode.WorkspaceConfiguration) {

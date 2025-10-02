@@ -115,7 +115,7 @@ export class FixAgent {
             });
 
             const userChoice = await vscode.window.showInformationMessage(
-                'Code Guardian generated an approved fix. Do you want to apply it?',
+                'Pentari generated an approved fix. Do you want to apply it?',
                 APPLY_ACTION,
                 'Cancel'
             );

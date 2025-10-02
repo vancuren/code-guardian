@@ -63,7 +63,7 @@ export class ChatController {
                 content: 'I ran into an issue answering that question. Please check your provider configuration and try again.'
             });
             this.sessionManager.updateSessionStatus(sessionId, 'error');
-            vscode.window.showErrorMessage('Code Guardian chat failed. See logs for details.');
+            vscode.window.showErrorMessage('Pentari chat failed. See logs for details.');
         }
     }
 
@@ -81,7 +81,7 @@ export class ChatController {
     }
 
     private buildSystemPrompt(session: ChatSession): string {
-        const base = 'You are Code Guardian, a security expert assistant embedded in VS Code. Provide concise, actionable answers about vulnerabilities and secure coding. Where appropriate, include code samples. Maintain a collaborative tone.';
+        const base = 'You are Pentari, a security expert assistant embedded in VS Code. Provide concise, actionable answers about vulnerabilities and secure coding. Where appropriate, include code samples. Maintain a collaborative tone.';
 
         if (session.metadata?.vulnerabilityMessage) {
             return `${base}\nCurrent issue: ${session.metadata.vulnerabilityMessage}`;
