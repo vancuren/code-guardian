@@ -45,7 +45,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 
     reveal() {
         if (!this.view) {
-            void vscode.commands.executeCommand('workbench.view.extension.code-guardian');
+            void vscode.commands.executeCommand('workbench.view.extension.pentari');
         } else {
             this.view.show?.(true);
         }
@@ -277,7 +277,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         <div id="messageList" class="message-list"></div>
         <div id="notice" class="notice" style="display: none;"></div>
         <form id="chatForm" class="input-area">
-            <textarea id="chatInput" placeholder="Ask Code Guardian about a vulnerability..."></textarea>
+            <textarea id="chatInput" placeholder="Ask Pentari about a vulnerability..."></textarea>
             <button type="submit">Send</button>
         </form>
         <div id="emptyState" class="empty-state" style="display: none;">
@@ -432,7 +432,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                 case 'user':
                     return 'You';
                 case 'assistant':
-                    return 'Code Guardian';
+                    return 'Pentari';
                 case 'agent':
                     return 'Agent';
                 case 'system':

@@ -1,4 +1,4 @@
-# Code Guardian Extension Overview
+# Pentari Extension Overview
 
 ## High-Level Workflow
 - Activation runs from `activate` in `code-guardian-extension/src/extension.ts`, wiring configuration, AI provider selection, diagnostics, and view providers.
@@ -21,7 +21,7 @@
 1. User triggers or auto-trigger calls `scanDocument` → ensures supported language (placeholder `isSupported`).
 2. `CodeAnalyzer.analyze` composes vulnerabilities from static/AI/runtime sources.
 3. Diagnostics updated; tree providers and webview reflect new results.
-4. Remediation occurs through quick fixes, AI fix workflow (`codeGuardian.generateAIFix`), or manual edits.
+4. Remediation occurs through quick fixes, AI fix workflow (`pentari.generateAIFix`), or manual edits.
 
 ## Current Limitations
 - Static and runtime analyzers only exist for JavaScript/TypeScript; other languages return no findings outside AI responses.
@@ -31,7 +31,7 @@
 - Configuration enum omits `anthropic` despite implemented provider; AI settings are global, not per-language.
 - Quick-fix suppression comments cover only JS/TS/Python styles.
 
-# Roadmap: Making Code Guardian Language Agnostic
+# Roadmap: Making Pentari Language Agnostic
 
 ## Goals
 - Support vulnerability detection in any file type opened in the editor.

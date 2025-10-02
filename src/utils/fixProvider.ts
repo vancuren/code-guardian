@@ -12,7 +12,7 @@ export class FixProvider implements vscode.CodeActionProvider {
         const actions: vscode.CodeAction[] = [];
 
         for (const diagnostic of context.diagnostics) {
-            if (diagnostic.source !== 'Code Guardian') {
+            if (diagnostic.source !== 'Pentari') {
                 continue;
             }
 
@@ -71,7 +71,7 @@ export class FixProvider implements vscode.CodeActionProvider {
         );
 
         action.command = {
-            command: 'codeGuardian.generateAIFix',
+            command: 'pentari.generateAIFix',
             title: 'Generate AI Fix',
             arguments: [document, diagnostic]
         };
@@ -86,7 +86,7 @@ export class FixProvider implements vscode.CodeActionProvider {
         diagnostic: vscode.Diagnostic
     ): vscode.CodeAction {
         const action = new vscode.CodeAction(
-            'Suppress Code Guardian Warning',
+            'Suppress Pentari Warning',
             vscode.CodeActionKind.QuickFix
         );
 
@@ -160,11 +160,11 @@ export class FixProvider implements vscode.CodeActionProvider {
         switch (language) {
             case 'javascript':
             case 'typescript':
-                return `// code-guardian-disable-next-line ${code}`;
+                return `// pentari-disable-next-line ${code}`;
             case 'python':
-                return `# code-guardian-disable-next-line ${code}`;
+                return `# pentari-disable-next-line ${code}`;
             default:
-                return `// code-guardian-disable-next-line ${code}`;
+                return `// pentari-disable-next-line ${code}`;
         }
     }
 }

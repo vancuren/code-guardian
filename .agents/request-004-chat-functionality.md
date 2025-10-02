@@ -5,7 +5,7 @@ Here is the bootstrap code for the view
 
 ```json
         {
-          "id": "codeGuardian.chat",
+          "id": "pentari.chat",
           "name": "Chat"
         }
 ```
@@ -21,7 +21,7 @@ Here is the bootstrap code for the view
       2. Is a QA for issues found
       3. Regular stream results
    2. createAIFixAction initiated
-      1. Need to implement codeGuardian.generateAIFix
+      1. Need to implement pentari.generateAIFix
       2. This copys the issue and suggested fix into a new chat session
       3. No user chat input available.
       4. Implements a small agentic workflow that has access to the minimum tools necessary to implement the suggested fix.

@@ -1,10 +1,10 @@
-# Code Guardian - AI Security Scanner for VS Code/Cursor
+# Pentari - AI Security Scanner for VS Code/Cursor
 
-**Code Guardian** is an advanced VS Code/Cursor extension that provides real-time security vulnerability detection and AI-powered fix suggestions for any language.
+**Pentari** is an advanced VS Code/Cursor extension that provides real-time security vulnerability detection and AI-powered fix suggestions for any language.
 
-With the rise of coding assistants like Codex, security has never been more important. Code is moving from shipping in weeks to days, and that speed demands protection. Code Guardian is a VS Code extension that monitors your code in real time, detects vulnerabilities, suggests fixes, and applies them when you request all using GPT-5. It’s language-agnostic and highly configurable, so you stay in control.
+With the rise of coding assistants like Codex, security has never been more important. Code is moving from shipping in weeks to days, and that speed demands protection. Pentari is a VS Code extension that monitors your code in real time, detects vulnerabilities, suggests fixes, and applies them when you request all using GPT-5. It’s language-agnostic and highly configurable, so you stay in control.
 
-Imagine you accidentally commit a hardcoded password. Code Guardian instantly flags it, explains why it’s a risk, and can generate a secure fix you can apply with one click. Security remediation becomes as simple as accepting a code suggestion—keeping your code fast, safe, and production-ready.
+Imagine you accidentally commit a hardcoded password. Pentari instantly flags it, explains why it’s a risk, and can generate a secure fix you can apply with one click. Security remediation becomes as simple as accepting a code suggestion—keeping your code fast, safe, and production-ready.
 
 ## Features
 
@@ -21,18 +21,19 @@ Imagine you accidentally commit a hardcoded password. Code Guardian instantly fl
 
 ## Configuration
 
-Open VS Code/Cursor settings and search for "Code Guardian":
+Open VS Code/Cursor settings and search for "Pentari":
 
 ```json
 {
-  "codeGuardian.aiProvider": "openai",
-  "codeGuardian.apiKey": "your-api-key-here",
-  "codeGuardian.autoScan": true,
-  "codeGuardian.allowedLanguages": ["javascript", "typescript"],
-  "codeGuardian.blockedLanguages": ["markdown"],
-  "codeGuardian.fileIncludeGlobs": ["**/*.{js,ts,jsx,tsx}"],
-  "codeGuardian.fileExcludeGlobs": ["**/node_modules/**", "**/.git/**"],
-  "codeGuardian.severityThreshold": "low"
+  "pentari.aiProvider": "openai",
+  "pentari.model": "gpt-5-nano",
+  "pentari.apiKey": "your-api-key-here",
+  "pentari.autoScan": true,
+  "pentari.allowedLanguages": ["javascript", "typescript"],
+  "pentari.blockedLanguages": ["markdown"],
+  "pentari.fileIncludeGlobs": ["**/*.{js,ts,jsx,tsx}"],
+  "pentari.fileExcludeGlobs": ["**/node_modules/**", "**/.git/**"],
+  "pentari.severityThreshold": "low"
 }
 ```
 
@@ -42,14 +43,14 @@ Open VS Code/Cursor settings and search for "Code Guardian":
 ## Usage
 
 ### Automatic Scanning
-With `autoScan` enabled, Code Guardian automatically scans files when:
+With `autoScan` enabled, Pentari automatically scans files when:
 - You save a file
 - You open a new file
 - You switch between files
 
 ### Manual Scanning
-- **Scan Current File**: `Cmd/Ctrl + Shift + P` → "Code Guardian: Scan Current File"
-- **Scan Workspace**: `Cmd/Ctrl + Shift + P` → "Code Guardian: Scan Workspace"
+- **Scan Current File**: `Cmd/Ctrl + Shift + P` → "Pentari: Scan Current File"
+- **Scan Workspace**: `Cmd/Ctrl + Shift + P` → "Pentari: Scan Workspace"
 
 ### Viewing Results
 - Issues appear in the Problems panel
@@ -67,7 +68,7 @@ With `autoScan` enabled, Code Guardian automatically scans files when:
 ## Security Panel
 
 Open the security panel to see all vulnerabilities:
-- `Cmd/Ctrl + Shift + P` → "Code Guardian: Show Security Panel"
+- `Cmd/Ctrl + Shift + P` → "Pentari: Show Security Panel"
 - View vulnerabilities grouped by file
 - See severity distribution
 - Apply fixes in bulk
@@ -78,6 +79,9 @@ Open the security panel to see all vulnerabilities:
 - Uses GPT-5 nano for analysis
 - Get API key from: https://platform.openai.com/api-keys
 
+### Anthropic
+- Use Claude for analysis
+- Get API key from https://console.anthropic.com
 
 ### Local Mode
 - Basic pattern matching without AI
@@ -112,7 +116,7 @@ npm run test:coverage
 
 ## Security Note
 
-Code Guardian helps identify common vulnerabilities but is not a replacement for:
+Pentari helps identify common vulnerabilities but is not a replacement for:
 - Professional security audits
 - Penetration testing
 - Code review by security experts
@@ -137,15 +141,15 @@ MIT License - see LICENSE file for details
 
 ## Support
 
-- Report issues: [GitHub Issues](https://github.com/yourusername/code-guardian/issues)
-- Documentation: [Wiki](https://github.com/yourusername/code-guardian/wiki)
+- Report issues: [GitHub Issues](https://github.com/vancuren/pentari/issues)
+- Documentation: [Wiki](https://github.com/vancuren/pentari/wiki)
 - Discord: [Join our community](https://discord.gg/yourserver)
 
 ## Acknowledgments
 
-- Built with ❤️ for the developer community
+- Built with ❤️ for the OpenAI GPT-5 Hackathon
 - Inspired by security best practices from OWASP
-- Powered by advanced AI models
+- Powered by OpenAI's most advanced AI model yet GPT-5-Codex
 
 ---
 

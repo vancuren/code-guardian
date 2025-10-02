@@ -1,9 +1,14 @@
 {
-  "name": "code-guardian",
-  "displayName": "CodeGuardian - Your security assistant",
+  "name": "pentari",
+  "displayName": "Pentari - Your security assistant",
   "description": "Real-time GPT-5 powered vulnerability detection and remediation for VS Code and Cursor.",
   "version": "1.0.8",
-  "publisher": "code-guardian",
+  "author": "Russell Van Curen",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vancuren/pentari"
+  },
+  "publisher": "Russell Van Curen",
   "engines": {
     "vscode": "^1.74.0"
   },
@@ -13,75 +18,82 @@
   ],
   "activationEvents": [
     "onStartupFinished",
-    "onCommand:codeGuardian.scanFile",
-    "onCommand:codeGuardian.scanWorkspace",
-    "onView:codeGuardian.chat"
+    "onCommand:pentari.scanFile",
+    "onCommand:pentari.scanWorkspace",
+    "onView:pentari.chat"
   ],
   "browser": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "codeGuardian.scanFile",
-        "title": "Code Guardian: Scan Current File",
+        "command": "pentari.scanFile",
+        "title": "Pentari: Scan Current File",
         "icon": "$(file-code)"
       },
       {
-        "command": "codeGuardian.scanWorkspace",
-        "title": "Code Guardian: Scan Workspace",
+        "command": "pentari.scanWorkspace",
+        "title": "Pentari: Scan Workspace",
         "icon": "$(file-directory)"
       },
       {
-        "command": "codeGuardian.applyFix",
-        "title": "Code Guardian: Apply Fix",
+        "command": "pentari.applyFix",
+        "title": "Pentari: Apply Fix",
         "icon": "$(check)"
       },
       {
-        "command": "codeGuardian.showPanel",
-        "title": "Code Guardian: Show Security Panel",
+        "command": "pentari.showPanel",
+        "title": "Pentari: Show Security Panel",
         "icon": "$(shield)"
       },
       {
-        "command": "codeGuardian.showTerminal",
-        "title": "Code Guardian: Show Terminal",
+        "command": "pentari.showTerminal",
+        "title": "Pentari: Show Terminal",
         "icon": "$(terminal)"
       },
       {
-        "command": "codeGuardian.fixVulnerability",
-        "title": "Code Guardian: Fix Vulnerability",
+        "command": "pentari.fixVulnerability",
+        "title": "Pentari: Fix Vulnerability",
         "icon": "$(check)"
       },
       {
-        "command": "codeGuardian.setApiKey",
-        "title": "Code Guardian: Set API Key",
-        "category": "Code Guardian"
+        "command": "pentari.setApiKey",
+        "title": "Pentari: Set API Key",
+        "category": "Pentari"
       }
     ],
     "configuration": {
-      "title": "Code Guardian",
+      "title": "Pentari",
       "properties": {
-        "codeGuardian.aiProvider": {
+        "pentari.aiProvider": {
           "type": "string",
           "default": "openai",
-          "enum": ["openai", "local"],
+          "enum": ["openai", "anthropic", "local"],
           "description": "AI provider for vulnerability analysis"
         },
-        "codeGuardian.model": {
+        "pentari.model": {
           "type": "string",
           "default": "gpt-5-nano",
           "enum": [
             "gpt-5",
             "gpt-5-nano",
             "gpt-5-mini",
-            "gpt-5-codex"
+            "gpt-5-codex",
+            "claude-sonnet-4-5-20250929",
+            "claude-sonnet-4-20250514",
+            "claude-3-7-sonnet-20250219",
+            "claude-opus-4-1-20250805",
+            "claude-opus-4-20250514",
+            "claude-3-5-haiku-latest",
+            "claude-3-haiku-20240307"
           ],
           "description": "Model used for AI analysis and fixes"
         },
-        "codeGuardian.autoScan": {
+        "pentari.autoScan": {
           "type": "boolean",
           "default": false,
           "description": "Automatically scan files on save"
         },
-        "codeGuardian.allowedLanguages": {
+        "pentari.allowedLanguages": {
           "type": "array",
           "default": [],
           "description": "Only analyze documents whose language identifier is listed here (leave empty to allow all text languages)",
@@ -89,7 +101,7 @@
             "type": "string"
           }
         },
-        "codeGuardian.blockedLanguages": {
+        "pentari.blockedLanguages": {
           "type": "array",
           "default": [],
           "description": "Skip analysis for documents whose language identifier matches any entry",
@@ -97,7 +109,7 @@
             "type": "string"
           }
         },
-        "codeGuardian.fileIncludeGlobs": {
+        "pentari.fileIncludeGlobs": {
           "type": "array",
           "default": [],
           "markdownDescription": "Glob patterns that must match a document path before it is analyzed. Leave empty to allow all files. Patterns use the same syntax as `files.exclude` (e.g. `**/*.{ts,js}`).",
@@ -105,7 +117,7 @@
             "type": "string"
           }
         },
-        "codeGuardian.fileExcludeGlobs": {
+        "pentari.fileExcludeGlobs": {
           "type": "array",
           "default": [
             "**/node_modules/**",
@@ -116,7 +128,7 @@
             "type": "string"
           }
         },
-        "codeGuardian.severityThreshold": {
+        "pentari.severityThreshold": {
           "type": "string",
           "default": "low",
           "enum": ["critical", "high", "medium", "low"],
@@ -127,24 +139,24 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "code-guardian",
-          "title": "Code Guardian",
+          "id": "pentari",
+          "title": "Pentari",
           "icon": "$(shield)"
         }
       ]
     },
     "views": {
-      "code-guardian": [
+      "pentari": [
         {
-          "id": "codeGuardian.vulnerabilities",
+          "id": "pentari.vulnerabilities",
           "name": "Vulnerabilities"
         },
         {
-          "id": "codeGuardian.suggestions",
+          "id": "pentari.suggestions",
           "name": "Fix Suggestions"
         },
         {
-          "id": "codeGuardian.chat",
+          "id": "pentari.chat",
           "name": "Chat",
           "type": "webview"
         }
@@ -153,20 +165,20 @@
     "menus": {
       "view/title": [
         {
-          "command": "codeGuardian.scanWorkspace",
-          "when": "view == codeGuardian.vulnerabilities",
+          "command": "pentari.scanWorkspace",
+          "when": "view == pentari.vulnerabilities",
           "group": "navigation@1"
         },
         {
-          "command": "codeGuardian.scanFile",
-          "when": "view == codeGuardian.vulnerabilities",
+          "command": "pentari.scanFile",
+          "when": "view == pentari.vulnerabilities",
           "group": "navigation@2"
         }
       ],
       "view/item/context": [
         {
-          "command": "codeGuardian.fixVulnerability",
-          "when": "viewItem == codeGuardian.vulnerability",
+          "command": "pentari.fixVulnerability",
+          "when": "viewItem == pentari.vulnerability",
           "group": "inline"
         }
       ]

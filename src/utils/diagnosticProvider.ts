@@ -20,7 +20,7 @@ export class DiagnosticProvider {
             );
 
             diagnostic.code = vuln.cwe || vuln.type;
-            diagnostic.source = 'Code Guardian';
+            diagnostic.source = 'Pentari';
 
             if (vuln.suggestion) {
                 diagnostic.relatedInformation = [
